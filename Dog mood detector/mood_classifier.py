@@ -9,12 +9,10 @@ class RegNetClassifier(nn.Module):
         # 1. Load pretrained RegNet
         self.base_model = models.regnet_y_400mf(weights=models.RegNet_Y_400MF_Weights.DEFAULT)
         
-        # 2. (Optional) Freeze the base layers
         if freeze_base:
             for param in self.base_model.parameters():
                 param.requires_grad = False
         
-        # 3. The "Smart" Head
         in_features = self.base_model.fc.in_features
         
         self.base_model.fc = nn.Sequential(
@@ -31,18 +29,17 @@ class MoodClassifier:
     def __init__(self, input_size=(3, 224, 224), num_classes=4, freeze_base=False):
         self.model = RegNetClassifier(num_classes, freeze_base=freeze_base)
 
-    # Helper to toggle freezing dynamically
+
     def set_freeze_base(self, freeze):
         for param in self.model.base_model.parameters():
             # We only freeze the feature extractor parts, not the fc head
             if param.shape != self.model.base_model.fc[0].weight.shape: # Crude check, usually better to iterate named_params
                  pass 
             
-        # Cleaner way:
-        # Freeze everything first
+
         for param in self.model.base_model.parameters():
             param.requires_grad = not freeze
             
-        # Always keep the head unfrozen
+
         for param in self.model.base_model.fc.parameters():
             param.requires_grad = True
